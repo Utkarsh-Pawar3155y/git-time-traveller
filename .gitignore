@@ -1,0 +1,22 @@
+# frontend
+node_modules
+dist
+.vite
+
+# backend
+venv
+__pycache__
+*.pyc
+
+# logs
+*.log
+
+# OS
+.DS_Store
+
+# editor
+.vscode
+.idea
+
+# env
+.env
