@@ -82,7 +82,11 @@ const Dashboard = ({ data }: DashboardProps) => {
           <div className="grid gap-6 lg:grid-cols-2">
             <motion.div custom={3} variants={sectionVariant} initial="hidden" animate="visible">
               <DashboardCard title="Contributor Network">
-                <ContributorNetwork contributors={data.contributors} edges={data.contributor_edges} />
+                <ContributorNetwork
+                  contributors={data.contributors}
+                  edges={data.contributor_edges}
+                  contributorFileMap={data.contributor_file_map}
+                />
               </DashboardCard>
             </motion.div>
             <motion.div custom={4} variants={sectionVariant} initial="hidden" animate="visible">

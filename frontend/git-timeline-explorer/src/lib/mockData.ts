@@ -15,6 +15,7 @@ export interface AnalysisData {
     commit_share_pct?: number;
     avatar?: string
   }[];
+  contributor_file_map?: Record<string, string[]>;
   contributor_edges: { source: string; target: string; weight: number }[];
   activity_calendar: { date: string; count: number }[];
   branches: { name: string; commits: number; parent?: string }[];
@@ -115,6 +116,7 @@ export const normalizeApiResponse = (raw: any, repoUrl: string): AnalysisData =>
     commits_per_day,
     top_files,
     contributors,
+    contributor_file_map: raw?.contributor_file_map ?? {},
     contributor_edges,
     activity_calendar,
     branches,
@@ -225,6 +227,14 @@ export const generateMockData = (repo: string): AnalysisData => {
       { name: "eve", commits: 67 },
       { name: "frank", commits: 45 },
     ],
+    contributor_file_map: {
+      alice: ["src/App.tsx", "src/index.ts", "src/utils/api.ts"],
+      bob: ["src/App.tsx", "src/hooks/useAuth.ts"],
+      charlie: ["src/utils/api.ts", "src/components/Dashboard.tsx"],
+      diana: ["src/components/Dashboard.tsx"],
+      eve: ["src/hooks/useAuth.ts"],
+      frank: ["README.md"]
+    },
     contributor_edges: [
       { source: "alice", target: "bob", weight: 42 },
       { source: "alice", target: "charlie", weight: 28 },

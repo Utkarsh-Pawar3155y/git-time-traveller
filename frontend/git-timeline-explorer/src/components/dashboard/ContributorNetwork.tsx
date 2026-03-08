@@ -16,6 +16,7 @@ interface Edge {
 interface Props {
   contributors: Contributor[];
   edges: Edge[];
+  contributorFileMap?: Record<string, string[]>;
 }
 
 const COLORS = [
@@ -29,7 +30,7 @@ const COLORS = [
   "hsl(310, 80%, 55%)",
 ];
 
-const ContributorNetwork = ({ contributors = [], edges = [] }: Props) => {
+const ContributorNetwork = ({ contributors = [], edges = [], contributorFileMap = {} }: Props) => {
   const [hovered, setHovered] = useState<string | null>(null);
   const count = contributors.length;
   const isLarge = count > 10;
@@ -116,7 +117,7 @@ const ContributorNetwork = ({ contributors = [], edges = [] }: Props) => {
   };
 
   return (
-    <div className="flex items-center justify-center overflow-hidden">
+    <div className="relative flex items-center justify-center overflow-hidden">
       <svg viewBox={`0 0 ${viewW} ${viewH}`} className="h-[400px] w-full" style={{ maxWidth: viewW }}>
         {/* Decorative rings */}
         {rings.map((ring, i) => (
@@ -187,6 +188,18 @@ const ContributorNetwork = ({ contributors = [], edges = [] }: Props) => {
           contributors
         </text>
       </svg>
+      {hovered && contributorFileMap[hovered] && (
+        <div className="absolute bottom-4 left-4 rounded-lg border border-border bg-background/80 backdrop-blur px-3 py-2 text-xs max-w-xs">
+          <div className="font-semibold mb-1">{hovered} modified:</div>
+          <ul className="space-y-1">
+            {contributorFileMap[hovered].slice(0, 5).map((file, i) => (
+              <li key={i} className="text-muted-foreground">
+                • {file}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   );
 };
