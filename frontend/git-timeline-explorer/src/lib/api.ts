@@ -5,12 +5,14 @@ const API_URL = "http://localhost:8000";
 
 export const analyzeRepo = async (
   repoUrl: string,
-  rangeDays?: number
+  rangeDays?: number,
+  author?: string
 ): Promise<AnalysisData> => {
   try {
     const response = await axios.post(`${API_URL}/analyze`, {
       repo_url: repoUrl,
-      range_days: rangeDays
+      range_days: rangeDays,
+      author: author
     });
     return normalizeApiResponse(response.data, repoUrl);
   } catch {

@@ -61,6 +61,7 @@ class AnalyzeRequest(BaseModel):
     branch: Optional[str] = None  # optional: clone specific branch
     max_commits: Optional[int] = None  # optional: limit commits (for demo speed)
     range_days: Optional[int] = None
+    author: Optional[str] = None
 
     @field_validator("repo_url")
     @classmethod
@@ -200,7 +201,8 @@ def analyze(body: AnalyzeRequest):
             result = analyze_repository(
             repo,
             max_commits=2000,
-            range_days=body.range_days
+            range_days=body.range_days,
+            author=body.author
         )       
         except Exception as exc:
             logger.exception("Analysis failed")

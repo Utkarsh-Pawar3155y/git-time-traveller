@@ -841,8 +841,11 @@ def generate_insights(
 # Main orchestrator
 # ---------------------------------------------------------------------------
 
-def analyze_repository(repo, max_commits: int = 2000, range_days: int | None = None) -> dict[str, Any]:
+def analyze_repository(repo, max_commits: int = 2000, range_days: int | None = None, author: str | None = None) -> dict[str, Any]:
     commits = extract_commits(repo, max_commits=max_commits)
+    # Filter by author if provided
+    if author:
+        commits = [c for c in commits if c["author"] == author]
     # Optional time-range filtering
     if range_days is not None:
         from datetime import datetime, timezone

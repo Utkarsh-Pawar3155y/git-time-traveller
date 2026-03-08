@@ -1,6 +1,8 @@
 import { motion } from "framer-motion";
 import { GitBranch, ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { analyzeRepo } from "@/lib/api";
 import { AnalysisData } from "@/lib/mockData";
 import AnimatedTimeline from "@/components/dashboard/AnimatedTimeline";
 import CodeChurnHeatmap from "@/components/dashboard/CodeChurnHeatmap";
@@ -10,6 +12,7 @@ import BranchVisualization from "@/components/dashboard/BranchVisualization";
 import HotspotPanel from "@/components/dashboard/HotspotPanel";
 import HealthScoreMeter from "@/components/dashboard/HealthScoreMeter";
 import AIInsightsPanel from "@/components/dashboard/AIInsightsPanel";
+
 
 interface DashboardProps {
   data: AnalysisData;
@@ -26,6 +29,8 @@ const sectionVariant = {
 
 const Dashboard = ({ data }: DashboardProps) => {
   const navigate = useNavigate();
+  const [dashboardData, setDashboardData] = useState(data);
+  const [selectedAuthor, setSelectedAuthor] = useState<string | undefined>(undefined);
 
   return (
     <div className="min-h-screen bg-background grid-bg">
@@ -39,7 +44,29 @@ const Dashboard = ({ data }: DashboardProps) => {
             </span>
           </div>
           <div className="flex items-center gap-4">
-            <span className="hidden text-xs text-muted-foreground sm:block">{data.repo}</span>
+            <div className="flex items-center gap-3">
+              <span className="hidden text-xs text-muted-foreground sm:block">
+                {dashboardData.repo}
+              </span>
+
+              <select
+                className="text-xs bg-background border border-border rounded px-2 py-1"
+                value={selectedAuthor ?? ""}
+                onChange={(e) => {
+                  const author = e.target.value || undefined;
+                  setSelectedAuthor(author);
+
+                  analyzeRepo(dashboardData.repo, undefined, author).then(setDashboardData);
+                }}
+              >
+                <option value="">All Authors</option>
+                {dashboardData.contributors.map((c) => (
+                  <option key={c.name} value={c.name}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </div>
             <button
               onClick={() => navigate("/")}
               className="flex items-center gap-1 rounded-md border border-border px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:border-primary hover:text-primary"
@@ -57,7 +84,7 @@ const Dashboard = ({ data }: DashboardProps) => {
           {/* Row 1: Timeline full width */}
           <motion.div custom={0} variants={sectionVariant} initial="hidden" animate="visible">
             <DashboardCard title="Commit Timeline">
-              <AnimatedTimeline data={data.commits_per_day} />
+              <AnimatedTimeline data={dashboardData.commits_per_day} />
             </DashboardCard>
           </motion.div>
 
@@ -66,14 +93,16 @@ const Dashboard = ({ data }: DashboardProps) => {
             <motion.div custom={1} variants={sectionVariant} initial="hidden" animate="visible" className="lg:col-span-2">
               <DashboardCard title="Code Churn Heatmap">
                 <CodeChurnHeatmap
-                  data={data.top_files}
-                  onRangeChange={(days) => analyzeRepo(data.repo, days).then(setData)}
+                  data={dashboardData.top_files}
+                  onRangeChange={(days) =>
+                    analyzeRepo(dashboardData.repo, days, selectedAuthor).then(setDashboardData)
+                  }
                 />
               </DashboardCard>
             </motion.div>
             <motion.div custom={2} variants={sectionVariant} initial="hidden" animate="visible">
               <DashboardCard title="Health Score">
-                <HealthScoreMeter score={data.health_score} />
+                <HealthScoreMeter score={dashboardData.health_score} />
               </DashboardCard>
             </motion.div>
           </div>
@@ -83,15 +112,15 @@ const Dashboard = ({ data }: DashboardProps) => {
             <motion.div custom={3} variants={sectionVariant} initial="hidden" animate="visible">
               <DashboardCard title="Contributor Network">
                 <ContributorNetwork
-                  contributors={data.contributors}
-                  edges={data.contributor_edges}
-                  contributorFileMap={data.contributor_file_map}
+                  contributors={dashboardData.contributors}
+                  edges={dashboardData.contributor_edges}
+                  contributorFileMap={dashboardData.contributor_file_map}
                 />
               </DashboardCard>
             </motion.div>
             <motion.div custom={4} variants={sectionVariant} initial="hidden" animate="visible">
               <DashboardCard title="Hotspot Panel">
-                <HotspotPanel hotspots={data.hotspots} />
+                <HotspotPanel hotspots={dashboardData.hotspots} />
               </DashboardCard>
             </motion.div>
           </div>
@@ -99,7 +128,7 @@ const Dashboard = ({ data }: DashboardProps) => {
           {/* Row 4: Activity Calendar */}
           <motion.div custom={5} variants={sectionVariant} initial="hidden" animate="visible">
             <DashboardCard title="Developer Activity Calendar">
-              <ActivityCalendar data={data.activity_calendar} />
+              <ActivityCalendar data={dashboardData.activity_calendar} />
             </DashboardCard>
           </motion.div>
 
@@ -107,8 +136,8 @@ const Dashboard = ({ data }: DashboardProps) => {
           <motion.div custom={6} variants={sectionVariant} initial="hidden" animate="visible">
             <DashboardCard title="Branch Visualization">
               <BranchVisualization
-                branches={data.branches}
-                relations={data.branch_relations}
+                branches={dashboardData.branches}
+                relations={dashboardData.branch_relations}
               />
             </DashboardCard>
           </motion.div>
@@ -116,7 +145,7 @@ const Dashboard = ({ data }: DashboardProps) => {
           {/* Row 6: AI Insights */}
           <motion.div custom={7} variants={sectionVariant} initial="hidden" animate="visible">
             <DashboardCard title="AI Insights">
-              <AIInsightsPanel insights={data.ai_insights} />
+              <AIInsightsPanel insights={dashboardData.ai_insights} />
             </DashboardCard>
           </motion.div>
         </div>
