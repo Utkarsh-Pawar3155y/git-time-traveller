@@ -1,7 +1,13 @@
 export interface AnalysisData {
   repo: string;
   commits_per_day: { date: string; count: number }[];
-  top_files: { file: string; changes: number; additions: number; deletions: number }[];
+  top_files: {file: string
+  change_frequency: number
+  additions: number
+  deletions: number
+  contributors: string[]
+  last_modified: string | null
+}[];
   contributors: { name: string; commits: number; avatar?: string }[];
   contributor_edges: { source: string; target: string; weight: number }[];
   activity_calendar: { date: string; count: number }[];
@@ -38,11 +44,19 @@ export const normalizeApiResponse = (raw: any, repoUrl: string): AnalysisData =>
   // top_files: from file_churn[] or top_files[]
   const fileChurn: any[] = raw?.file_churn ?? raw?.top_files ?? [];
   const top_files = fileChurn.map((f: any) => ({
-    file: f?.file ?? f?.name ?? "unknown",
-    changes: f?.churn ?? f?.changes ?? f?.value ?? 0,
-    additions: f?.additions ?? 0,
-    deletions: f?.deletions ?? 0,
-  }));
+  file: f?.file ?? f?.name ?? "unknown",
+  change_frequency:
+    f?.change_frequency ??
+    f?.commits ??
+    f?.churn ??
+    f?.changes ??
+    f?.value ??
+    0,
+  additions: f?.additions ?? 0,
+  deletions: f?.deletions ?? 0,
+  contributors: f?.contributors ?? [],
+  last_modified: f?.last_modified ?? null,
+}));
 
   // contributors
   const rawContributors: any[] = raw?.contributors ?? raw?.contributor_network_nodes ?? [];
@@ -114,22 +128,88 @@ export const generateMockData = (repo: string): AnalysisData => {
       count: Math.floor(Math.random() * 25) + 1,
     })),
     top_files: [
-      { file: "src/App.tsx", changes: 142, additions: 89, deletions: 53 },
-      { file: "src/index.ts", changes: 98, additions: 67, deletions: 31 },
-      { file: "src/utils/api.ts", changes: 87, additions: 52, deletions: 35 },
-      { file: "src/components/Dashboard.tsx", changes: 76, additions: 58, deletions: 18 },
-      { file: "src/hooks/useAuth.ts", changes: 65, additions: 41, deletions: 24 },
-      { file: "README.md", changes: 54, additions: 48, deletions: 6 },
-      { file: "src/styles/main.css", changes: 49, additions: 33, deletions: 16 },
-      { file: "package.json", changes: 43, additions: 28, deletions: 15 },
-      { file: "src/types/index.ts", changes: 38, additions: 32, deletions: 6 },
-      { file: "src/components/Header.tsx", changes: 35, additions: 23, deletions: 12 },
-      { file: "tests/app.test.ts", changes: 31, additions: 25, deletions: 6 },
-      { file: "src/lib/db.ts", changes: 28, additions: 19, deletions: 9 },
-      { file: "src/routes/api.ts", changes: 24, additions: 18, deletions: 6 },
-      { file: ".env.example", changes: 19, additions: 15, deletions: 4 },
-      { file: "docker-compose.yml", changes: 15, additions: 12, deletions: 3 },
-    ],
+    {
+      file: "src/App.tsx",
+      change_frequency: 142,
+      additions: 89,
+      deletions: 53,
+      contributors: [],
+      last_modified: null
+    },
+    {
+      file: "src/index.ts",
+      change_frequency: 98,
+      additions: 67,
+      deletions: 31,
+      contributors: [],
+      last_modified: null
+    },
+    {
+      file: "src/utils/api.ts",
+      change_frequency: 87,
+      additions: 52,
+      deletions: 35,
+      contributors: [],
+      last_modified: null
+    },
+    {
+      file: "src/components/Dashboard.tsx",
+      change_frequency: 76,
+      additions: 58,
+      deletions: 18,
+      contributors: [],
+      last_modified: null
+    },
+    {
+      file: "src/hooks/useAuth.ts",
+      change_frequency: 65,
+      additions: 41,
+      deletions: 24,
+      contributors: [],
+      last_modified: null
+    },
+    {
+      file: "README.md",
+      change_frequency: 54,
+      additions: 48,
+      deletions: 6,
+      contributors: [],
+      last_modified: null
+    },
+    {
+      file: "src/styles/main.css",
+      change_frequency: 49,
+      additions: 33,
+      deletions: 16,
+      contributors: [],
+      last_modified: null
+    },
+    {
+      file: "package.json",
+      change_frequency: 43,
+      additions: 28,
+      deletions: 15,
+      contributors: [],
+      last_modified: null
+    },
+    {
+      file: "src/types/index.ts",
+      change_frequency: 38,
+      additions: 32,
+      deletions: 6,
+      contributors: [],
+      last_modified: null
+    },
+    {
+      file: "src/components/Header.tsx",
+      change_frequency: 35,
+      additions: 23,
+      deletions: 12,
+      contributors: [],
+      last_modified: null
+    }
+],
+    
     contributors: [
       { name: "alice", commits: 234 },
       { name: "bob", commits: 187 },
@@ -160,6 +240,14 @@ export const generateMockData = (repo: string): AnalysisData => {
       { name: "feature/api", commits: 28, parent: "develop" },
       { name: "release/v2.0", commits: 15, parent: "main" },
     ],
+    branch_relations: [
+      { source: "main", target: "develop" },
+      { source: "develop", target: "feature/auth" },
+      { source: "develop", target: "feature/dashboard" },
+      { source: "main", target: "hotfix/security" },
+      { source: "develop", target: "feature/api" },
+      { source: "main", target: "release/v2.0" }
+    ],    
     hotspots: [
       { file: "src/App.tsx", risk: 92, reason: "High churn + multiple contributors", changes: 142 },
       { file: "src/utils/api.ts", risk: 78, reason: "Frequent bug fixes detected", changes: 87 },

@@ -305,14 +305,30 @@ def build_timeline(commits: list[dict]) -> list[dict]:
 
 def build_file_churn(commits: list[dict]) -> list[dict]:
     file_stats: dict[str, dict] = defaultdict(
-        lambda: {"additions": 0, "deletions": 0, "commits": 0, "contributors": set()}
-    )
-    for c in commits:
+        lambda: {
+        "additions": 0,
+        "deletions": 0,
+        "commits": 0,
+        "contributors": set(),
+        "last_modified": None   # NEW
+        }
+    )       
+
+    for c in commits:           
         for f in c["files_changed"]:
-            # Distribute lines evenly across files (stats.files has per-file data
-            # but we already aggregated; good enough for analytics)
             file_stats[f]["commits"] += 1
             file_stats[f]["contributors"].add(c["author"])
+
+            # track last modification
+            if (
+                file_stats[f]["last_modified"] is None
+                or c["date_obj"] > file_stats[f]["last_modified"]
+            ):
+                file_stats[f]["last_modified"] = c["date_obj"]
+        
+        
+        
+        
         # Per-commit totals spread across files for approximation
         n = len(c["files_changed"]) or 1
         for f in c["files_changed"]:
@@ -325,16 +341,19 @@ def build_file_churn(commits: list[dict]) -> list[dict]:
         result.append(
             {
                 "file": filepath,
+                "folder": filepath.split("/")[0] if "/" in filepath else "root",
                 "additions": stats["additions"],
                 "deletions": stats["deletions"],
                 "churn": churn,
                 "commits": stats["commits"],
+                "change_frequency": stats["commits"],   # NEW
                 "contributors": list(stats["contributors"]),
                 "contributor_count": len(stats["contributors"]),
+                "last_modified": stats["last_modified"].isoformat() if stats["last_modified"] else None
             }
         )
 
-    result.sort(key=lambda x: x["churn"], reverse=True)
+    result.sort(key=lambda x: x["change_frequency"], reverse=True)
     return result[:200]  # Cap for response size
 
 
@@ -871,9 +890,16 @@ def analyze_repository(repo, max_commits: int = 2000) -> dict[str, Any]:
 
     # Enrich file_churn with name alias (some frontends use .name not .file)
     enriched_churn = [
-        {**f, "name": f["file"], "value": f["churn"]}
+        {
+            **f,    
+            "name": f["file"],
+            "value": f["change_frequency"]   # heatmap uses frequency
+        }
         for f in file_churn
-    ]
+    ]      
+    
+    
+    
 
     # Enrich hotspots
     enriched_hotspots = [
