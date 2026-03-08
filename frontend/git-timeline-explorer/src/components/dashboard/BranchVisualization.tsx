@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from "react";
+import { useMemo } from "react";
 import {
   ReactFlow,
   Background,
@@ -12,11 +12,16 @@ import "@xyflow/react/dist/style.css";
 interface Branch {
   name: string;
   commits: number;
-  parent?: string;
+}
+
+interface Relation {
+  source: string;
+  target: string;
 }
 
 interface Props {
   branches: Branch[];
+  relations: Relation[];
 }
 
 const COLORS = [
@@ -29,7 +34,7 @@ const COLORS = [
   "hsl(45, 90%, 55%)",
 ];
 
-const BranchVisualization = ({ branches = [] }: Props) => {
+const BranchVisualization = ({ branches = [], relations = [] }: Props) => {
   const { initialNodes, initialEdges } = useMemo(() => {
     const nodes: Node[] = branches.map((b, i) => ({
       id: b.name,
@@ -47,26 +52,32 @@ const BranchVisualization = ({ branches = [] }: Props) => {
       },
     }));
 
-    const edges: Edge[] = branches
-      .filter((b) => b.parent)
-      .map((b) => ({
-        id: `${b.parent}-${b.name}`,
-        source: b.parent!,
-        target: b.name,
-        animated: true,
-        style: { stroke: "hsl(185, 100%, 50%)", strokeWidth: 2 },
-      }));
+    const edges: Edge[] = relations.map((r, i) => ({
+      id: `edge-${i}`,
+      source: r.source,
+      target: r.target,
+      animated: true,
+      style: { stroke: "hsl(185, 100%, 50%)", strokeWidth: 2 },
+    }));
 
     return { initialNodes: nodes, initialEdges: edges };
-  }, [branches]);
+  }, [branches, relations]);
 
   const [nodes, , onNodesChange] = useNodesState(initialNodes);
   const [edges, , onEdgesChange] = useEdgesState(initialEdges);
 
-  if (branches.length === 0) return <div className="flex h-[350px] items-center justify-center text-muted-foreground text-sm">No data</div>;
+  if (branches.length === 0)
+    return (
+      <div className="flex h-[350px] items-center justify-center text-muted-foreground text-sm">
+        No data
+      </div>
+    );
 
   return (
-    <div className="h-[350px] w-full rounded-lg" style={{ background: "hsl(230, 25%, 6%)" }}>
+    <div
+      className="h-[350px] w-full rounded-lg"
+      style={{ background: "hsl(230, 25%, 6%)" }}
+    >
       <ReactFlow
         nodes={nodes}
         edges={edges}

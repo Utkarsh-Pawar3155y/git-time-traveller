@@ -6,6 +6,7 @@ export interface AnalysisData {
   contributor_edges: { source: string; target: string; weight: number }[];
   activity_calendar: { date: string; count: number }[];
   branches: { name: string; commits: number; parent?: string }[];
+  branch_relations: { source: string; target: string; }[];
   hotspots: { file: string; risk: number; reason: string; changes: number }[];
   health_score: number;
   ai_insights: string[];
@@ -73,6 +74,8 @@ export const normalizeApiResponse = (raw: any, repoUrl: string): AnalysisData =>
     parent: b?.parent,
   }));
 
+  const branch_relations = raw?.branch_relations ?? [];
+
   // hotspots: from risk_scores[] or hotspots[]
   const rawHotspots: any[] = raw?.risk_scores ?? raw?.hotspots ?? [];
   const hotspots = rawHotspots.map((h: any) => ({
@@ -94,6 +97,7 @@ export const normalizeApiResponse = (raw: any, repoUrl: string): AnalysisData =>
     contributor_edges,
     activity_calendar,
     branches,
+    branch_relations,
     hotspots,
     health_score,
     ai_insights,

@@ -99,7 +99,10 @@ const Dashboard = ({ data }: DashboardProps) => {
           {/* Row 5: Branches */}
           <motion.div custom={6} variants={sectionVariant} initial="hidden" animate="visible">
             <DashboardCard title="Branch Visualization">
-              <BranchVisualization branches={data.branches} />
+              <BranchVisualization
+                branches={data.branches}
+                relations={data.branch_relations}
+              />
             </DashboardCard>
           </motion.div>
 

@@ -176,27 +176,110 @@ def extract_commits(repo, max_commits: int = 2000) -> list[dict]:
 
     return commit_list
 
-
 def extract_branches(repo) -> list[dict]:
-    branches: list[dict] = []
+    """
+    Extract both local and remote branches with commit counts.
+    """
+
+    import subprocess
+
+    branches = []
+    repo_path = repo.working_dir
+    seen = set()
+
     try:
+
+        # --- LOCAL BRANCHES ---
         for branch in repo.branches:
-            try:
-                branches.append(
-                    {
-                        "name": branch.name,
-                        "latest_commit": branch.commit.hexsha[:7],
-                        "latest_commit_date": datetime.fromtimestamp(
-                            branch.commit.authored_date, tz=timezone.utc
-                        ).isoformat(),
-                        "author": branch.commit.author.name or "Unknown",
-                    }
-                )
-            except Exception:
-                branches.append({"name": branch.name, "latest_commit": "", "latest_commit_date": "", "author": ""})
+            seen.add(branch.name)
+
+            cmd = ["git", "-C", repo_path, "rev-list", "--count", branch.name]
+
+            result = subprocess.run(cmd, capture_output=True, text=True)
+            count = int(result.stdout.strip() or 0)
+
+            branches.append(
+                {
+                    "name": branch.name,
+                    "git_ref": branch.name,
+                    "commits": count,
+                }
+            )       
+
+        # --- REMOTE BRANCHES ---
+        for ref in repo.remotes.origin.refs:
+
+            display_name = ref.name.replace("origin/", "")
+            internal_name = ref.name
+
+            if display_name in seen or display_name == "HEAD":
+                continue
+
+            cmd = ["git", "-C", repo_path, "rev-list", "--count", ref.name]
+
+            result = subprocess.run(cmd, capture_output=True, text=True)
+            count = int(result.stdout.strip() or 0)
+
+            branches.append(
+                {
+                    "name": display_name,
+                    "git_ref": internal_name,
+                    "commits": count,
+                }
+            )
+
     except Exception:
         pass
+
     return branches
+
+def build_branch_relations(repo, branches):
+    """
+    Create branch relations using commit ancestry.
+    If branch B contains commits from A, we connect A -> B.
+    """
+
+    import subprocess
+
+    repo_path = repo.working_dir
+    edges = []
+
+    names = [b["git_ref"] for b in branches]
+
+    for a in names:
+        for b in names:
+
+            if a == b:
+                continue
+
+            try:
+                cmd = [
+                    "git",
+                    "-C",
+                    repo_path,
+                    "merge-base",
+                    "--is-ancestor",
+                    a,
+                    b,
+                ]
+
+                result = subprocess.run(
+                    cmd,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL
+                )               
+
+                # exit code 0 means A is ancestor of B
+                if result.returncode == 0:
+                    edges.append({
+                        "source": a.replace("origin/", ""),
+                        "target": b.replace("origin/", "")
+                    })
+
+            except Exception:
+                pass
+
+    return edges
 
 
 # ---------------------------------------------------------------------------
@@ -374,10 +457,12 @@ def build_activity_calendar(commits: list[dict]) -> list[dict]:
         total = sum(authors.values())
         calendar.append(
             {
-                "date": day,
-                "total_commits": total,
-                "authors": dict(authors),
-                "intensity": min(4, total // 3),  # 0-4 like GitHub heatmap
+            "date": day,
+            "week": datetime.strptime(day, "%Y-%m-%d").isocalendar().week,
+            "weekday": datetime.strptime(day, "%Y-%m-%d").weekday(),
+            "total_commits": total,
+            "authors": dict(authors),
+            "intensity": min(4, int(math.log2(total + 1))),
             }
         )
     return calendar
@@ -740,6 +825,7 @@ def generate_insights(
 def analyze_repository(repo, max_commits: int = 2000) -> dict[str, Any]:
     commits = extract_commits(repo, max_commits=max_commits)
     branches = extract_branches(repo)
+    branch_relations = build_branch_relations(repo, branches)
     timeline = build_timeline(commits)
     file_churn = build_file_churn(commits)
     contributors = build_contributor_stats(commits)
@@ -828,8 +914,11 @@ def analyze_repository(repo, max_commits: int = 2000) -> dict[str, Any]:
 
     # Enrich activity_calendar
     enriched_calendar = [
-        {**day, "count": day["total_commits"], "value": day["total_commits"],
-         "week": day["date"][:7]}
+        {
+            **day,
+            "count": day["total_commits"],
+            "value": day["total_commits"],
+        }
         for day in activity_calendar
     ]
 
@@ -856,6 +945,7 @@ def analyze_repository(repo, max_commits: int = 2000) -> dict[str, Any]:
         "contributor_file_map": contrib_file_map,
         "activity_calendar": enriched_calendar,
         "branches": enriched_branches,
+        "branch_relations": branch_relations,
         "hotspots": enriched_hotspots,
         "risk_scores": enriched_risk,
         "growth_metrics": growth,
