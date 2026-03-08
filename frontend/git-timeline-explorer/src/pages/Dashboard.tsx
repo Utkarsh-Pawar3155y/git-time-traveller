@@ -65,7 +65,10 @@ const Dashboard = ({ data }: DashboardProps) => {
           <div className="grid gap-6 lg:grid-cols-3">
             <motion.div custom={1} variants={sectionVariant} initial="hidden" animate="visible" className="lg:col-span-2">
               <DashboardCard title="Code Churn Heatmap">
-                <CodeChurnHeatmap data={data.top_files} />
+                <CodeChurnHeatmap
+                  data={data.top_files}
+                  onRangeChange={(days) => analyzeRepo(data.repo, days).then(setData)}
+                />
               </DashboardCard>
             </motion.div>
             <motion.div custom={2} variants={sectionVariant} initial="hidden" animate="visible">

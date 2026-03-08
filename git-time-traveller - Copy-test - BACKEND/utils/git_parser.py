@@ -841,8 +841,18 @@ def generate_insights(
 # Main orchestrator
 # ---------------------------------------------------------------------------
 
-def analyze_repository(repo, max_commits: int = 2000) -> dict[str, Any]:
+def analyze_repository(repo, max_commits: int = 2000, range_days: int | None = None) -> dict[str, Any]:
     commits = extract_commits(repo, max_commits=max_commits)
+    # Optional time-range filtering
+    if range_days is not None:
+        from datetime import datetime, timezone
+
+        now = datetime.now(timezone.utc)
+
+        commits = [
+            c for c in commits
+            if (now - c["date_obj"]).days <= range_days
+        ]   
     branches = extract_branches(repo)
     branch_relations = build_branch_relations(repo, branches)
     timeline = build_timeline(commits)

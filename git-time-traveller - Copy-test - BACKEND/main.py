@@ -60,6 +60,7 @@ class AnalyzeRequest(BaseModel):
     repo_url: str
     branch: Optional[str] = None  # optional: clone specific branch
     max_commits: Optional[int] = None  # optional: limit commits (for demo speed)
+    range_days: Optional[int] = None
 
     @field_validator("repo_url")
     @classmethod
@@ -196,7 +197,11 @@ def analyze(body: AnalyzeRequest):
         # Analyse
         try:
             logger.info("Running git log analysis (max 2000 commits, 60s timeout)…")
-            result = analyze_repository(repo, max_commits=2000)
+            result = analyze_repository(
+            repo,
+            max_commits=2000,
+            range_days=body.range_days
+        )       
         except Exception as exc:
             logger.exception("Analysis failed")
             raise HTTPException(
