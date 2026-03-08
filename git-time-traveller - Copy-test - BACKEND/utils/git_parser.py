@@ -298,6 +298,35 @@ def build_timeline(commits: list[dict]) -> list[dict]:
         for day, count in sorted(day_counts.items())
     ]
 
+def build_file_evolution(commits: list[dict]) -> dict:
+    """
+    Tracks LOC growth per file over time.
+    Returns:
+    {
+      "file1": [{date, size}],
+      "file2": [{date, size}]
+    }
+    """
+
+    file_sizes = defaultdict(int)
+    history = defaultdict(list)
+
+    commits_sorted = sorted(commits, key=lambda c: c["date_obj"])
+
+    for c in commits_sorted:
+        for f in c["files_changed"]:
+            delta = c["lines_added"] - c["lines_deleted"]
+            file_sizes[f] += delta
+
+            history[f].append({
+                "date": c["date_obj"].strftime("%Y-%m-%d"),
+                "size": max(file_sizes[f], 0)
+            })
+
+    # only keep top 5 files to keep response small
+    result = dict(list(history.items())[:5])
+
+    return result
 
 # ---------------------------------------------------------------------------
 # File churn
@@ -859,6 +888,7 @@ def analyze_repository(repo, max_commits: int = 2000, range_days: int | None = N
     branches = extract_branches(repo)
     branch_relations = build_branch_relations(repo, branches)
     timeline = build_timeline(commits)
+    file_evolution = build_file_evolution(commits)
     file_churn = build_file_churn(commits)
     contributors = build_contributor_stats(commits)
     contributor_network = build_contributor_network(commits)
@@ -977,6 +1007,7 @@ def analyze_repository(repo, max_commits: int = 2000, range_days: int | None = N
         },
         # --- core arrays (enriched) ---
         "timeline": enriched_timeline,
+        "file_evolution": file_evolution,
         "file_churn": enriched_churn,
         "contributors": enriched_contributors,
         "contributor_network": contributor_network,          # original

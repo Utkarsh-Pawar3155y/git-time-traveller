@@ -13,6 +13,7 @@ import HotspotPanel from "@/components/dashboard/HotspotPanel";
 import HealthScoreMeter from "@/components/dashboard/HealthScoreMeter";
 import AIInsightsPanel from "@/components/dashboard/AIInsightsPanel";
 import ActivityPatterns from "@/components/dashboard/ActivityPatterns";
+import FileEvolution from "@/components/dashboard/FileEvolution";
 
 
 interface DashboardProps {
@@ -136,6 +137,12 @@ const Dashboard = ({ data }: DashboardProps) => {
           <motion.div custom={6} variants={sectionVariant} initial="hidden" animate="visible">
             <DashboardCard title="Activity Patterns">
               <ActivityPatterns commits={dashboardData.recent_commits} />
+            </DashboardCard>
+          </motion.div>
+          
+          <motion.div custom={7} variants={sectionVariant} initial="hidden" animate="visible">
+            <DashboardCard title="File Evolution">
+              <FileEvolution data={dashboardData.file_evolution} />
             </DashboardCard>
           </motion.div>
 

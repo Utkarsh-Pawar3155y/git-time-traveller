@@ -1,6 +1,7 @@
 export interface AnalysisData {
   repo: string;
   commits_per_day: { date: string; count: number }[];
+  file_evolution?: Record<string, { date: string; size: number }[]>;
   top_files: {
     file: string
     change_frequency: number
@@ -115,6 +116,7 @@ export const normalizeApiResponse = (raw: any, repoUrl: string): AnalysisData =>
   return {
     repo,
     commits_per_day,
+    file_evolution: raw?.file_evolution ?? {},
     top_files,
     contributors,
     contributor_file_map: raw?.contributor_file_map ?? {},
