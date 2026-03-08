@@ -33,6 +33,10 @@ const Dashboard = ({ data }: DashboardProps) => {
   const navigate = useNavigate();
   const [dashboardData, setDashboardData] = useState(data);
   const [selectedAuthor, setSelectedAuthor] = useState<string | undefined>(undefined);
+  const [scrubDate, setScrubDate] = useState<string | undefined>(undefined);
+  const filteredTimeline = scrubDate
+    ? dashboardData.commits_per_day.filter(d => d.date <= scrubDate)
+    : dashboardData.commits_per_day;
 
   return (
     <div className="min-h-screen bg-background grid-bg">
@@ -86,7 +90,10 @@ const Dashboard = ({ data }: DashboardProps) => {
           {/* Row 1: Timeline full width */}
           <motion.div custom={0} variants={sectionVariant} initial="hidden" animate="visible">
             <DashboardCard title="Commit Timeline">
-              <AnimatedTimeline data={dashboardData.commits_per_day} />
+              <AnimatedTimeline
+                data={filteredTimeline}
+                onScrub={(date) => setScrubDate(date)}
+              />
             </DashboardCard>
           </motion.div>
 
@@ -95,7 +102,9 @@ const Dashboard = ({ data }: DashboardProps) => {
             <motion.div custom={1} variants={sectionVariant} initial="hidden" animate="visible" className="lg:col-span-2">
               <DashboardCard title="Code Churn Heatmap">
                 <CodeChurnHeatmap
-                  data={dashboardData.top_files}
+                  data={dashboardData.top_files.filter(f =>
+                    !scrubDate || !f.last_modified || f.last_modified <= scrubDate
+                  )}
                   onRangeChange={(days) =>
                     analyzeRepo(dashboardData.repo, days, selectedAuthor).then(setDashboardData)
                   }
@@ -130,7 +139,13 @@ const Dashboard = ({ data }: DashboardProps) => {
           {/* Row 4: Activity Calendar */}
           <motion.div custom={5} variants={sectionVariant} initial="hidden" animate="visible">
             <DashboardCard title="Developer Activity Calendar">
-              <ActivityCalendar data={dashboardData.activity_calendar} />
+              <ActivityCalendar
+                data={
+                  scrubDate
+                    ? dashboardData.activity_calendar.filter(d => d.date <= scrubDate)
+                    : dashboardData.activity_calendar
+                }
+              />
             </DashboardCard>
           </motion.div>
 
@@ -139,7 +154,7 @@ const Dashboard = ({ data }: DashboardProps) => {
               <ActivityPatterns commits={dashboardData.recent_commits} />
             </DashboardCard>
           </motion.div>
-          
+
           <motion.div custom={7} variants={sectionVariant} initial="hidden" animate="visible">
             <DashboardCard title="File Evolution">
               <FileEvolution data={dashboardData.file_evolution} />

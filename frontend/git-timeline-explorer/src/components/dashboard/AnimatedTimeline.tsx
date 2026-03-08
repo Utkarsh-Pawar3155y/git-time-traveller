@@ -4,9 +4,10 @@ import { Play, Pause } from "lucide-react";
 
 interface Props {
   data: { date: string; count: number }[];
+  onScrub?: (date: string) => void;
 }
 
-const AnimatedTimeline = ({ data = [] }: Props) => {
+const AnimatedTimeline = ({ data = [], onScrub }: Props) => {
   const [sliceIndex, setSliceIndex] = useState(data.length);
   const [playing, setPlaying] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -49,7 +50,15 @@ const AnimatedTimeline = ({ data = [] }: Props) => {
           min={1}
           max={data.length}
           value={sliceIndex}
-          onChange={(e) => { setPlaying(false); setSliceIndex(Number(e.target.value)); }}
+          onChange={(e) => {
+            setPlaying(false);
+            const index = Number(e.target.value);
+            setSliceIndex(index);
+
+            if (onScrub && data[index - 1]) {
+              onScrub(data[index - 1].date);
+            }
+          }}
           className="flex-1 accent-[hsl(var(--primary))]"
         />
         <span className="text-xs text-muted-foreground">{sliceIndex}/{data.length} days</span>
