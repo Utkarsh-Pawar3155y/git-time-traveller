@@ -932,6 +932,7 @@ def analyze_repository(repo, max_commits: int = 2000, range_days: int | None = N
             "value": c["commits"],
             "additions": c["lines_added"],
             "deletions": c["lines_deleted"],
+            "commit_share_pct": c["commit_share_pct"]
         }
         for c in contributors
     ]

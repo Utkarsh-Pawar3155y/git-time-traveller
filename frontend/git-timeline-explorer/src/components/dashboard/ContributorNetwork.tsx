@@ -4,6 +4,7 @@ import { useState, useMemo } from "react";
 interface Contributor {
   name: string;
   commits: number;
+  commit_share_pct?: number;
 }
 
 interface Edge {
@@ -169,7 +170,7 @@ const ContributorNetwork = ({ contributors = [], edges = [] }: Props) => {
                   </text>
                   {(!isLarge || isFocused) && (
                     <text x={p.x} y={p.y + r + (isLarge ? 24 : 28)} textAnchor="middle" fill="hsl(215, 15%, 55%)" fontSize={isLarge ? 8 : 9} fontFamily="JetBrains Mono">
-                      {p.commits} commits
+                      {p.commits} commits ({contributors.find(c => c.name === p.name)?.commit_share_pct ?? 0}%)
                     </text>
                   )}
                 </>
