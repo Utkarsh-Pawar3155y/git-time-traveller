@@ -12,6 +12,7 @@ import BranchVisualization from "@/components/dashboard/BranchVisualization";
 import HotspotPanel from "@/components/dashboard/HotspotPanel";
 import HealthScoreMeter from "@/components/dashboard/HealthScoreMeter";
 import AIInsightsPanel from "@/components/dashboard/AIInsightsPanel";
+import ActivityPatterns from "@/components/dashboard/ActivityPatterns";
 
 
 interface DashboardProps {
@@ -129,6 +130,12 @@ const Dashboard = ({ data }: DashboardProps) => {
           <motion.div custom={5} variants={sectionVariant} initial="hidden" animate="visible">
             <DashboardCard title="Developer Activity Calendar">
               <ActivityCalendar data={dashboardData.activity_calendar} />
+            </DashboardCard>
+          </motion.div>
+
+          <motion.div custom={6} variants={sectionVariant} initial="hidden" animate="visible">
+            <DashboardCard title="Activity Patterns">
+              <ActivityPatterns commits={dashboardData.recent_commits} />
             </DashboardCard>
           </motion.div>
 

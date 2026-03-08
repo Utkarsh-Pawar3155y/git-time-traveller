@@ -21,6 +21,7 @@ export interface AnalysisData {
   branches: { name: string; commits: number; parent?: string }[];
   branch_relations: { source: string; target: string; }[];
   hotspots: { file: string; risk: number; reason: string; changes: number }[];
+  recent_commits?: { date: string; author?: string }[]
   health_score: number;
   ai_insights: string[];
 }
@@ -124,6 +125,7 @@ export const normalizeApiResponse = (raw: any, repoUrl: string): AnalysisData =>
     hotspots,
     health_score,
     ai_insights,
+    recent_commits: raw?.commits ?? raw?.recent_commits ?? []
   };
 };
 
